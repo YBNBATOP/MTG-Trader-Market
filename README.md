@@ -8,4 +8,4 @@ This project has yet much more potential, however it is not planned to be worked
 
 Here is the video that I made to demonstrate the possibilities of the web application:
 
-![YouTube video demonstration](https://www.youtube.com/watch?v=Ljbo5ySVlrw&t=13s)
+[YouTube video demonstration](https://www.youtube.com/watch?v=Ljbo5ySVlrw&t=13s)
