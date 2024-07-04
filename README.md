@@ -15,3 +15,6 @@ Here is the video that I made to demonstrate the possibilities of the web applic
 Here I want to specify the main parts that I worked on and that were requirements for the project:
 - Blazor sessions (easiest implementation for Blazor sessions with Blazor Session Storage)
 - Overall design for main pages, card pages (overview + details page), main idea for the purpose of the website.
+- Modifying the initial database to add the functionality needed (for future non-working features)
+- Card filtering system
+
