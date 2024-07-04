@@ -1,0 +1,52 @@
+﻿@page "/register"
+@inject NavigationManager NavigationManager;
+
+<PageTitle>Register</PageTitle>
+
+<h2>Register</h2>
+<p>Please Register to access additional features of our service. If you see this page, then it means you are not logged in.</p>
+
+<div class="form-registration">
+	<EditForm Model="registeringUser" OnValidSubmit="AddingUser">
+		<DataAnnotationsValidator>
+		</DataAnnotationsValidator>
+
+		<div class="form-group-username">
+			<label for="UserName">User name</label>
+			<InputText @bind-Value="registeringUser.UserName" class="form-control" id="UserName"
+				placeholder="User name">
+			</InputText>
+			<ValidationMessage For="@(() => registeringUser.UserName)"></ValidationMessage>
+		</div>
+
+		<div class="form-group-password">
+			<label for="Password">Password</label>
+			<InputText @bind-Value="registeringUser.Password" class="form-control" id="Password" type="password"
+				placeholder="Password"></InputText>
+			<ValidationMessage For="@(() => registeringUser.Password)"></ValidationMessage>
+		</div>
+
+		<div class="form-group-button">
+			<button type="submit" class="btn btn-primary">Register</button>
+		</div>
+		<div class="form-group-button">
+        <a href="login"><button type="submit" class="btn btn-primary">Sign in</button></a>
+    </div>
+	</EditForm>
+</div>
+
+@code {
+	private void AddingUser()
+	{
+		try
+		{
+			RegisterUser();
+			NavigationManager.NavigateTo("/");
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine("Error on registering page");
+			NavigationManager.NavigateTo("/register", forceLoad: true);
+		}
+	}
+}

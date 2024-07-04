@@ -1,0 +1,61 @@
+﻿<div class="trade-offer-container">
+    <div class="left-user">
+        <h2 class="user-name fw-bold">@user.Name</h2>
+        <div class="user-cards">
+            @foreach (var card in cards)
+			{
+				<div class="card">
+					<img src="@card.OriginalImageUrl" alt="@card.Name" />
+					<div class="card-name fw-bolder">@card.Name</div>
+				</div>
+			}
+        </div>
+    </div>
+    <div class="right-user">
+        <h2 class="user-name fw-bold">@user.Name</h2>
+        <div class="user-cards">
+            @foreach (var card in cards)
+            {
+                <div class="card">
+                    <img src="@card.OriginalImageUrl" alt="@card.Name" />
+                    <div class="card-name fw-bolder">@card.Name</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private Models.Card[]? cards;
+    private Models.CardsService cardsService = new Models.CardsService();
+
+    private class User {
+        public string Name { get; set; }
+        public int Age { get; set; }
+
+        public User(string name, int age)
+        {
+            Name = name;
+            Age = age;
+        }
+    }
+
+    private User user = new User("Geralt", 75);
+    
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        cards = cardsService.GetCards(15)
+        .ToArray();
+    }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate asynchronous loading to demonstrate streaming rendering
+        await Task.Delay(500);
+    }
+
+}

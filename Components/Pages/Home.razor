@@ -1,0 +1,66 @@
+﻿@page "/"
+@using MTGTraderMarket.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage ProtectedSessionStorage
+
+<PageTitle>Home</PageTitle>
+
+<div class="main-logo">
+	<img src="images/mtg-logo-white.png" alt="MTG Logo">
+</div>
+
+@if (user == null)
+{
+	<div class="main-title">
+		<h1>Welcome to the MTGTraderMarket, stranger!</h1>
+	</div>
+} else {
+	<div class="main-title">
+		<h1>Welcome to the MTGTraderMarket, @user.Username!</h1>
+	</div>
+}
+
+
+<div class="main-information">
+	<p>Welcome to MTGTraderMarket, the ultimate marketplace and trading hub for Magic: The Gathering enthusiasts! Dive
+		into a realm where every card tells a story and every trade sparks excitement. Whether you're a seasoned
+		Planeswalker or just beginning your journey, our platform is your gateway to building the perfect deck and
+		connecting with fellow Magic fans around the globe.</p>
+
+	<p>Discover a vast collection of Magic cards from every set and expansion, meticulously curated to ensure quality
+		and authenticity. Whether you're seeking rare foils, powerful mythics, or essential commons, you'll find them
+		all here, waiting to enhance your collection and elevate your gameplay.</p>
+
+	<p>But MTGTraderMarket is more than just a marketplace—it's a thriving community of passionate players united by
+		their love for the game. Engage in lively discussions, share deck strategies, and forge new friendships with
+		like-minded individuals who share your passion for Magic.</p>
+
+	<p>Our intuitive trading system empowers you to swap cards with ease, ensuring that every transaction is smooth,
+		secure, and satisfying. Whether you're looking to complete a set, upgrade your deck, or simply explore new
+		possibilities, our trading platform makes it easy to turn your Magic dreams into reality.</p>
+
+	<p>Join us on MTGTraderMarket and embark on a journey through the multiverse unlike any other. Whether you're
+		hunting for elusive treasures, trading with fellow players, or simply basking in the magic of the Gathering,
+		there's always something exciting waiting for you here.</p>
+
+	<p>Are you ready to take the next step in your Magic adventure? Sign up now and join our vibrant community of
+		players, collectors, and traders. The world of Magic awaits—let's make some history together.</p>
+
+	<p><a href="https://magic.wizards.com/en">Check out the MTG main website too!</a></p>
+</div>
+
+<img src="images/background-image.jpg" alt="Backrground image">
+
+@code {
+	private User? user;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var getUser = await ProtectedSessionStorage.GetAsync<User>("user");
+
+		if (getUser.Success)
+		{
+			user = getUser.Value;
+		}
+	}
+}

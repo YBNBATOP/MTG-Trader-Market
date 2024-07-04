@@ -1,0 +1,79 @@
+@page "/checkout"
+@using MTGTraderMarket.Models
+@attribute [StreamRendering]
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage ProtectedSessionStore
+
+<PageTitle>Cart Checkout</PageTitle>
+
+<h2>Your cart</h2>
+<p>Here you can view the cards you want to buy.</p>
+
+@if (cartCards == null)
+{
+    <p><em>No cards have been added yet to your basket</em></p>
+}
+else
+{
+    <button class="btn btn-primary" @onclick="@(() => BuyAllCards())">Buy all</button>
+    <div class="added-cards">
+        @foreach (Card card in cartCards)
+        {
+            <div class="card">
+                <img src="@card.OriginalImageUrl" alt="@card.Name" />
+                <div class="card-information">
+                    <h3>@card.Name</h3>
+                    <p>@card.Type</p>
+                    <p>@card.Toughness / @card.Power</p>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    public List<Card> cartCards = new List<Card>();
+    public List<Card> alreadyBoughtCards = new List<Card>();
+    private Models.CardsService cardsService = new Models.CardsService();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await ProtectedSessionStore.GetAsync<List<String>>("mtgIds");
+        var boughtCards = await ProtectedSessionStore.GetAsync<List<Card>>("boughtCards");
+        if (result.Success)
+        {
+            foreach (String mtgId in result.Value)
+            {
+                addCardToCartList(mtgId);
+            }
+        }
+        else
+        {
+            cartCards = null;
+        }
+
+        if (boughtCards.Success)
+        {
+            boughtCards.Value.ForEach(c => alreadyBoughtCards.Add(c));
+        }
+    }
+
+    private void addCardToCartList(String id)
+    {
+        if (!string.IsNullOrEmpty(id))
+        {
+            Card card = cardsService.GetCardByMTGId(id).FirstOrDefault();
+            cartCards.Add(card);
+        }
+    }
+
+    private async Task BuyAllCards()
+    {
+        await ProtectedSessionStore.DeleteAsync("mtgIds");
+        List<Card> boughtCards = new List<Card>();
+        alreadyBoughtCards.ForEach(c => boughtCards.Add(c));
+        cartCards.ForEach(c => boughtCards.Add(c));
+        cartCards = null;
+        await ProtectedSessionStore.SetAsync("boughtCards", boughtCards);
+    }
+}

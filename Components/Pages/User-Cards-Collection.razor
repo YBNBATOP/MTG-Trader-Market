@@ -1,0 +1,72 @@
+@page "/usercollection"
+@using MTGTraderMarket.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject NavigationManager NavigationManager
+@inject ProtectedSessionStorage ProtectedSessionStorage
+
+<PageTitle>User Collection</PageTitle>
+
+<p>Here you can see the cards that you own</p>
+
+@if (user == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <h1>@user.Username's Collection</h1>
+}
+
+@if (userCards != null) {
+    <div class="added-cards">
+        @foreach (Card card in userCards)
+        {
+            <div class="card">
+                <img src="@card.OriginalImageUrl" alt="@card.Name" />
+                <div class="card-information">
+                    <h3>@card.Name</h3>
+                    <p>@card.Type</p>
+                    <p>@card.Toughness / @card.Power</p>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p><em>No cards have been added yet to your collection</em></p>
+
+}
+
+@code {
+    private User? user;
+    private List<Card> userCards = new List<Card>();
+    private CardsService cardsService = new CardsService();
+    private UserService userService = new UserService();
+    protected override async Task OnInitializedAsync()
+    {
+        var getUser = await ProtectedSessionStorage.GetAsync<User>("user");
+        var getBoughtCards = await ProtectedSessionStorage.GetAsync<List<Card>>("boughtCards");
+
+        if (getUser.Success)
+        {
+            user = getUser.Value;
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+
+        if (getBoughtCards.Success)
+        {
+            getBoughtCards.Value.ForEach(card =>
+            {
+                userCards.Add(card);
+            });
+        }
+        else
+        {
+            userCards = null;
+        }
+    }
+}

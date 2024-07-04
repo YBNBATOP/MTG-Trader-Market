@@ -1,0 +1,117 @@
+﻿@page "/cardDetails/{mtgId}"
+@using MTGTraderMarket.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage ProtectedSessionStore
+@inject NavigationManager NavigationManager
+
+<PageTitle>Card Details</PageTitle>
+
+@if (card == null)
+{
+	<p><em>Loading...</em></p>
+}
+else
+{
+	<div class="card-information">
+	<div class="card-image">
+		<img src=@card.OriginalImageUrl>
+	</div>
+
+	<div class="main-information">
+		<h3>@card.Name</h3>
+		<p><b>Product details</b></p>
+		<div class="card-description">
+			@foreach (var line in SplitByNewLine(card.Text))
+				{
+					<p>@line</p>
+				}
+			</div>
+			<p><b>Rarity:</b> @card.RarityCode</p>
+			<p><b>Number:</b> @card.Number</p>
+			<p><b>Card Type:</b> @card.Type</p>
+			<p><b>Power / Toughness</b>: @card.Power / @card.Toughness</p>
+			<p><b>Power / Toughness</b>: @card.Power / @card.Toughness</p>
+			<p><b>Card Flavor:</b> @card.Flavor</p>
+			<div class="mana-cost">
+				<p><b>Casting Cost: </b>
+						@foreach (var manaCostImage in GetManaCostImages(card.ManaCost))
+						{
+							<img src="@manaCostImage" alt="Mana Cost">
+						}
+				</p>
+			</div>
+			<p><b>Artist:</b> @artist.FullName</p>
+			<button class="btn btn-primary" @onclick="@(() => AddCardToCart(mtgId))">Buy this card</button>
+		</div>
+	</div>
+
+}
+
+
+
+@code {
+	[Parameter]
+
+	public string? mtgId { get; set; }
+
+	private Models.Card? card { get; set; }
+
+	private Models.Artist? artist { get; set; }
+
+	private Models.CardsService cardsService = new Models.CardsService();
+
+	private Models.ArtistService artistService = new Models.ArtistService();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Run(() =>
+		{
+			if (!string.IsNullOrEmpty(mtgId))
+			{
+				card = cardsService.GetCardByMTGId(mtgId).ToArray().FirstOrDefault();
+				artist = artistService.GetArtistById(card.ArtistId);
+			}
+		});
+	}
+
+
+	private IEnumerable<string> GetManaCostImages(string manaCost)
+	{
+		var components = manaCost.Split('{', '}');
+		var imageUrls = new List<string>();
+
+		foreach (var component in components)
+		{
+			if (!string.IsNullOrWhiteSpace(component))
+			{
+				string imageUrl = $"images/{component}.svg";
+				imageUrls.Add(imageUrl);
+			}
+		}
+
+		return imageUrls;
+	}
+
+	public async Task AddCardToCart(String mtgId)
+	{
+		var result = await ProtectedSessionStore.GetAsync<List<String>>("mtgIds");
+		List<String> mtgIds = new List<String>();
+		if (result.Success)
+		{
+			mtgIds = result.Value;
+			mtgIds.Add(mtgId);
+		}
+		else
+		{
+			mtgIds.Add(mtgId);
+		}
+		await ProtectedSessionStore.SetAsync("mtgIds", mtgIds);
+
+	}
+
+	//function to get a string input and split it into an array, delimted by a new line
+	private string[] SplitByNewLine(string input)
+	{
+		return input.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+	}
+}

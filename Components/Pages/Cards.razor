@@ -1,0 +1,209 @@
+﻿@page "/cards"
+@using MTGTraderMarket.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject ProtectedSessionStorage ProtectedSessionStorage
+
+<PageTitle>Cards</PageTitle>
+
+<h1>Cards</h1>
+<h2>Welcome to the market!</h2>
+
+@if (cards == null)
+{
+    <p class="loading-text"><em>Loading...</em></p>
+}
+else
+{
+    <div class="filtering-container">
+        <div class="searching-card-name">
+            <input @bind="searchQuery" placeholder="Search by card name" />
+        </div>
+
+        <div class="additional-filters">
+            @if (rarities != null)
+            {
+                <select class="form-select" id="rarity" @bind="rarityCode">
+                    <option value="">Select rarity type</option>
+                    @foreach (var rarity in rarities)
+                    {
+                        <option value="@rarity.Code">@rarity.Name</option>
+                    }
+                </select>
+            }
+
+            @if (sets != null)
+            {
+                <select class="form-select" id="set" @bind="setCode">
+                    <option value="">Select set name</option>
+                    @foreach (var set in sets)
+                    {
+                        <option value="@set.Code">@set.Name</option>
+                    }
+                </select>
+            }
+
+            @if (types != null)
+            {
+                <select class="form-select" id="type" @bind="typeName">
+                    <option value="">Select card type</option>
+                    @foreach (var type in types)
+                    {
+                        <option value="@type.Name">@type.Name</option>
+                    }
+                </select>
+            }
+        </div>
+        <button class="btn btn-primary" @onclick="SearchCards
+    ">Search</button>
+    </div>
+
+    <div class="card-container">
+        @foreach (var card in cards)
+        {
+            <div class="card">
+                <img src=@card.OriginalImageUrl>
+                <div>
+                    <p>@card.Name</p>
+                    <p><b>Type:</b> @card.Type</p>
+                    <p><b>Set:</b> @card.SetCode</p>
+                    <p class="price">$ @CalculatePrice(card)</p>
+                    <button data-target=@card.MtgId @onclick="@(() => ShowCardDetails
+                (card.MtgId))">View</button>
+                </div>
+            </div>
+        }
+    </div>
+    <footer>
+        <button @onclick="@(() => RefillCards())" class="btn btn-primary">More</button>
+    </footer>
+}
+@code {
+    public static int DEFAULT_AMOUNT_CARDS = 15;
+    private Models.Card[]? cards;
+    private Models.Rarity[]? rarities;
+    private Models.Type[]? types;
+    private Models.Set[]? sets;
+    private Models.CardsService cardsService = new Models.CardsService();
+    private Models.MiscCardsService miscCardsService = new Models.MiscCardsService();
+
+    public int amountOfCards = DEFAULT_AMOUNT_CARDS;
+    public string searchQuery = "";
+    public string rarityCode = "";
+    public string typeName = "";
+    public string setCode = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+
+        var getQuery = await ProtectedSessionStorage.GetAsync<string>("searchQuery");
+        var getAmountOfCards = await ProtectedSessionStorage.GetAsync<int>("amountOfCards");
+        var getRarityCode = await ProtectedSessionStorage.GetAsync<string>("rarityCode");
+        var getTypeName = await ProtectedSessionStorage.GetAsync<string>("typeName");
+        var getSetCode = await ProtectedSessionStorage.GetAsync<string>("setCode");
+
+        if (getQuery.Success || getRarityCode.Success || getTypeName.Success || getSetCode.Success || getAmountOfCards.Success)
+        {
+            searchQuery = getQuery.Value ?? "";
+            rarityCode = getRarityCode.Value ?? "";
+            typeName = getTypeName.Value ?? "";
+            setCode = getSetCode.Value ?? "";
+            amountOfCards = getAmountOfCards.Value;
+            await SearchCards();
+            rarities = miscCardsService.GetRarities().ToArray();
+            types = miscCardsService.GetTypes().ToArray();
+            sets = miscCardsService.GetSets().ToArray();
+        }
+        else
+        {
+            await GetAllCards();
+        }
+    }
+
+    private void ShowCardDetails(string mtgId)
+    {
+        NavigationManager.NavigateTo($"/cardDetails/{mtgId}");
+    }
+
+    private double CalculatePrice(Models.Card card)
+    {
+        double price = 0.1;
+
+        if (card.ConvertedManaCost != null)
+        {
+            if (card.ConvertedManaCost.Contains("."))
+            {
+                price += 1.0;
+            }
+            else
+            {
+                price += double.Parse(card.ConvertedManaCost);
+            }
+        }
+
+        switch (card.RarityCode)
+        {
+            case "C":
+                price *= 0.15;
+                break;
+            case "U":
+                price *= 0.25;
+                break;
+            case "R":
+                price *= 0.5;
+                break;
+            case "M":
+                price *= 1.5;
+                break;
+        }
+
+        if (card.Toughness != null)
+        {
+            if (card.Toughness.Contains("*") || card.Toughness.Contains("?") || card.Toughness.Contains("."))
+            {
+                price /= 1.5;
+            }
+            else
+            {
+                price /= double.Parse(card.Toughness);
+            }
+        }
+
+        if (card.Power == null || card.Toughness == null)
+        {
+            price += 1.0;
+        }
+
+        return Math.Round(price, 2);
+    }
+
+    //Async methods
+    private async Task SearchCards()
+    {
+        cards = cardsService.GetCardBySearchFilters(searchQuery, rarityCode, setCode, typeName, amountOfCards).ToArray();
+        await ProtectedSessionStorage.SetAsync("searchQuery", searchQuery);
+        await ProtectedSessionStorage.SetAsync("amountOfCards", amountOfCards);
+        await ProtectedSessionStorage.SetAsync("rarityCode", rarityCode);
+        await ProtectedSessionStorage.SetAsync("typeName", typeName);
+        await ProtectedSessionStorage.SetAsync("setCode", setCode);
+    }
+
+    private async Task RefillCards()
+    {
+        amountOfCards += DEFAULT_AMOUNT_CARDS;
+        await ProtectedSessionStorage.SetAsync("amountOfCards", amountOfCards);
+        cards = cardsService.GetCardBySearchFilters(searchQuery, rarityCode, setCode, typeName, amountOfCards).ToArray();
+    }
+
+    private async Task GetAllCards()
+    {
+        await Task.Delay(500);
+        cards = cardsService.GetCards(amountOfCards).ToArray();
+        rarities = miscCardsService.GetRarities().ToArray();
+        types = miscCardsService.GetTypes().ToArray();
+        sets = miscCardsService.GetSets().ToArray();
+    }
+}

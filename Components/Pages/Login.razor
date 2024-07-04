@@ -1,0 +1,50 @@
+@page "/login"
+@inject NavigationManager NavigationManager
+
+<PageTitle>Log In</PageTitle>
+
+<h2>Log in</h2>
+<p>Please use your credentials to enter the platform. If you do not have an account, consider registering in the sign up option.</p>
+
+
+<div class="form-login">
+<EditForm Model="logingUser" OnValidSubmit="LogingUserIn">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="form-group-username">
+        <label for="UserName">User name</label>
+        <InputText @bind-Value="logingUser.UserName" class="form-control" id="UserName" placeholder="User name">
+        </InputText>
+        <ValidationMessage For="@(() => logingUser.UserName)"></ValidationMessage>
+    </div>
+
+    <div class="form-group-password">
+        <label for="UserName">Password</label>
+        <InputText @bind-Value="logingUser.Password" class="form-control" id="UserName" placeholder="Password"
+            type="password"></InputText>
+        <ValidationMessage For="@(() => logingUser.Password)"></ValidationMessage>
+    </div>
+
+    <div class="form-group-button">
+        <button type="submit" class="btn btn-primary">Login</button>
+    </div>
+    <div class="form-group-button">
+        <a href="register"><button type="submit" class="btn btn-primary">Sign up</button></a>
+    </div>
+</EditForm>
+</div>
+
+@code {
+    private void LogingUserIn()
+    {
+        try
+        {
+            LoginUser();
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Error on login page");
+            NavigationManager.NavigateTo("/login", forceLoad: true);
+        }
+    }
+}
